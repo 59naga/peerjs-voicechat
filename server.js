@@ -5,7 +5,7 @@ var socketIo= require('socket.io')
 var ExpressPeerServer= require('peer').ExpressPeerServer
 
 // Environment
-var port= 59798
+var port= process.env.PORT || 59798
 var options= {
     debug: true
 }
