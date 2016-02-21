@@ -1,0 +1,13 @@
+{
+  "name": "fuga",
+  "private": true,
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.13.4",
+    "peer": "^0.2.8",
+    "socket.io": "^1.4.5"
+  },
+  "scripts": {
+    "server": "node server.js"
+  }
+}
