@@ -2,65 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Document</title>
+  <title>Voicechat</title>
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/0.3.14/peer.js"></script>
-<script>
-navigator.webkitGetUserMedia({audio:true}, function(stream) {
-  var peer
-  var socket = io()
-  // `peer-server`へ自分のstreamを公開する
-  socket.on('connect',function(){
-    var options= {
+  <script>
+navigator.webkitGetUserMedia({ audio: true }, function (stream) {
+  var peer;
+  var socket = io();
+  socket.on('connect', function () {
+    var options = {
       host: location.hostname,
       port: location.port,
-      path: 'api',
-    }
-    peer = new Peer(socket.id, options)
-    peer.on('call', function(call) {
-      console.log(call.peer+'にcallされました')
-      call.answer(stream)
-    })
-  })
-  // 公開されているstreamをaudio要素に全て変換する
-  socket.on('keys',function(keys){
-    var audios= document.querySelector('#audios')
-    audios.innerHTML= ''
+      path: '/api', // app.use('/api', peerServer);と同じ位置になるように
+    };
+    peer = new Peer(socket.id, options);
+    peer.on('call', function (call) {
+      console.log('%sにcallされました', call.peer);
+      call.answer(stream);
+    });
+  });
 
-    var index= keys.indexOf(socket.id)
-    if(index>-1){
-      keys.splice(index,1)
+  // 受信した全てのP2Pkeyをaudio要素に変換する
+  socket.on('keys', function (keys) {
+    var audios = document.querySelector('#audios');
+    audios.innerHTML = '';
+    
+    var index = keys.indexOf(socket.id);
+    if (index > -1) {
+      keys.splice(index, 1);// 自分自身を無視
     }
-
-    keys.forEach(function(key){
+    keys.forEach(function (key) {
       var call = peer.call(key, stream);
-      if(call===undefined){
-        console.log(key+'なんて居ません')
-        return
+      if (call === undefined) {
+        console.log(key + 'なんて居ません');
+        return;
       }
+      call.on('stream', function (remoteStream) {
+        var audio = new Audio;
+        audio.src = URL.createObjectURL(remoteStream);
+        audio.controls = true;
+        audio.play();
 
-      call.on('stream', function(remoteStream) {
-        var audio= new Audio
-        audio.src= URL.createObjectURL(remoteStream)
-        audio.controls= true
-        audio.play()
-
-        audios.appendChild(audio)
+        audios.appendChild(audio);
       });
-    })
-  })
-
-}, function(error) {
-  alert('Failed to get local stream' ,error);
+    });
+  });
+}, function (error) {
+  alert('Failed to get local stream', error);
 });
-</script>
-  
+  </script>
 </head>
 <body>
-
+  
 <section id="audios">
   <p>他のユーザーを待っています…</p>
 </section>
-  
+
 </body>
 </html>

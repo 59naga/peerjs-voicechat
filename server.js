@@ -1,43 +1,41 @@
 // Dependencies
-var express= require('express')
-var http= require('http')
-var socketIo= require('socket.io')
-var ExpressPeerServer= require('peer').ExpressPeerServer
+const express = require('express');
+const createHttpServer = require('http').createServer;
+const createIo = require('socket.io');
+const createPeerServer = require('peer').ExpressPeerServer;
 
 // Environment
-var port= process.env.PORT || 59798
-var options= {
-    debug: true
-}
+const port = process.env.PORT || 59798;
 
 // Routes
-var app= express()
-var server= http.Server(app)
-var io= socketIo(server)
-var expressPeerServer= ExpressPeerServer(server, options)
-app.get('/', (req, res, next)=>{
-  res.sendFile(__dirname+'/index.html')
-})
+const app = express();
+const httpServer = createHttpServer(app);
+const io = createIo(httpServer);
+const peerServer = createPeerServer(httpServer);
 
-app.use('/api', expressPeerServer)
+app.use('/api', peerServer);
+app.use(express.static(__dirname));
 
-server.listen(port)
+// Boot
+httpServer.listen(port, () => {
+  console.log(`Boot on http://localhost:${port}`);
+});
 
-// audio rooms
-var keys= []
-expressPeerServer.on('connection',(key)=>{
-  keys.push(key)
+// Manage p2p keys
+const keys = [];
+peerServer.on('connection', (key) => {
+  keys.push(key);
 
-  console.log('connected',keys)
-  
-  io.emit('keys',keys)
-})
-expressPeerServer.on('disconnect',(key)=>{
-  var index= keys.indexOf(key)
-  if(index>-1){
-    keys.splice(index,1)
+  console.log('connected', keys);
+
+  io.emit('keys', keys);
+});
+peerServer.on('disconnect', (key) => {
+  const index = keys.indexOf(key);
+  if (index > -1) {
+    keys.splice(index, 1);
   }
-  console.log('disconnect',keys)
+  console.log('disconnect', keys);
 
-  io.emit('keys',keys)
-})
+  io.emit('keys', keys);
+});
